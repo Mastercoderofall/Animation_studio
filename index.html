@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101016">
+  <title>Animatix Studio — Frame-by-frame animation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Animatix Studio home">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span class="brand-name">animatix<span class="brand-studio">STUDIO</span></span>
+      </a>
+      <div class="project-title">
+        <span class="project-indicator"></span>
+        <span id="project-name">Untitled animation</span>
+        <button class="icon-button rename-button" id="rename-project" aria-label="Rename project" title="Rename project">✎</button>
+      </div>
+      <div class="top-actions">
+        <span class="save-status"><span class="save-dot"></span> Session only · export to save</span>
+        <button class="button button-quiet" id="import-project" title="Open an Animatix project">Open project</button>
+        <input id="project-file" type="file" accept=".animatix,.json,application/json" hidden>
+        <button class="button button-primary" id="export-project"><span aria-hidden="true">↗</span> Export project</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="tool-panel" aria-label="Drawing tools">
+        <div class="panel-heading"><span>TOOLS</span></div>
+        <div class="tool-group">
+          <button class="tool-button active" data-tool="pencil" aria-label="Pencil" title="Pencil (P)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15.2 5.2 3.6 3.6M4 20l4.1-.8L19 8.3a2.5 2.5 0 0 0-3.5-3.5L4.7 15.6 4 20Z"/></svg>
+            <span>Pencil</span><kbd>P</kbd>
+          </button>
+          <button class="tool-button" data-tool="eraser" aria-label="Eraser" title="Eraser (E)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7.5 19-4-4a2 2 0 0 1 0-2.8l8.7-8.7a2 2 0 0 1 2.8 0l5 5a2 2 0 0 1 0 2.8L12.3 19H7.5Z"/><path d="m8 8.5 7.5 7.5M12.3 19H21"/></svg>
+            <span>Eraser</span><kbd>E</kbd>
+          </button>
+        </div>
+        <div class="tool-divider"></div>
+        <div class="settings-section">
+          <label class="section-label" for="brush-size">BRUSH SIZE <span id="brush-size-value">6 px</span></label>
+          <input id="brush-size" class="range-input" type="range" min="1" max="40" value="6">
+          <div class="range-ends"><span>1</span><span>40</span></div>
+        </div>
+        <div class="tool-divider"></div>
+        <div class="settings-section color-section">
+          <label class="section-label" for="brush-color">COLOR</label>
+          <div class="color-control">
+            <input id="brush-color" type="color" value="#e9a6ff" aria-label="Brush color">
+            <span id="color-value">#E9A6FF</span>
+          </div>
+          <div class="color-swatches" aria-label="Color presets">
+            <button class="swatch" style="--swatch:#e9a6ff" data-color="#e9a6ff" aria-label="Lavender"></button>
+            <button class="swatch" style="--swatch:#ff7798" data-color="#ff7798" aria-label="Coral"></button>
+            <button class="swatch" style="--swatch:#ffbf69" data-color="#ffbf69" aria-label="Amber"></button>
+            <button class="swatch" style="--swatch:#79e0c3" data-color="#79e0c3" aria-label="Mint"></button>
+            <button class="swatch" style="--swatch:#82b8ff" data-color="#82b8ff" aria-label="Blue"></button>
+            <button class="swatch" style="--swatch:#f2f0fa" data-color="#f2f0fa" aria-label="White"></button>
+          </div>
+        </div>
+        <div class="tool-divider"></div>
+        <button id="onion-toggle" class="toggle-row" aria-pressed="true">
+          <span class="onion-icon" aria-hidden="true">◉</span>
+          <span class="toggle-copy"><strong>Onion skin</strong><small>Previous frame overlay</small></span>
+          <span class="toggle-switch"><span></span></span>
+        </button>
+        <div class="tool-hint"><span class="hint-icon">i</span> Draw on the canvas. Use <kbd>⌘ Z</kbd> to undo.</div>
+      </aside>
+
+      <section class="editor" aria-label="Animation editor">
+        <div class="canvas-toolbar">
+          <div class="canvas-breadcrumb"><span>CANVAS</span><span class="breadcrumb-slash">/</span><span id="canvas-frame-label">FRAME 01</span></div>
+          <div class="canvas-actions">
+            <button class="icon-button" id="undo-button" aria-label="Undo" title="Undo (⌘Z)" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-2"/></svg></button>
+            <button class="icon-button" id="redo-button" aria-label="Redo" title="Redo (⌘⇧Z)" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h2"/></svg></button>
+            <span class="toolbar-divider"></span>
+            <span class="zoom-label">100%</span>
+            <button class="icon-button fit-button" id="clear-frame" aria-label="Clear current frame" title="Clear current frame"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M5 7l1 13h12l1-13M9 7V4h6v3"/></svg></button>
+          </div>
+        </div>
+        <div class="canvas-stage" id="canvas-stage">
+          <div class="canvas-wrap" id="canvas-wrap">
+            <canvas id="onion-canvas" aria-hidden="true"></canvas>
+            <canvas id="drawing-canvas" aria-label="Animation drawing canvas"></canvas>
+            <div class="canvas-empty-hint" id="canvas-hint">
+              <span class="hint-sparkle">✳</span>
+              <span>Start drawing something wonderful</span>
+              <small>Your first frame is a blank canvas</small>
+            </div>
+          </div>
+          <div class="canvas-caption"><span><span class="live-dot"></span> READY TO CREATE</span><span>960 × 540 px</span></div>
+        </div>
+      </section>
+    </main>
+
+    <section class="timeline" aria-label="Animation timeline">
+      <div class="timeline-top">
+        <div class="timeline-title"><span class="timeline-icon">▤</span><strong>Timeline</strong><span class="frame-count" id="frame-count">1 frame</span></div>
+        <div class="timeline-controls">
+          <div class="playback-controls">
+            <button class="playback-button" id="play-button" aria-label="Play animation" title="Play (Space)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg>
+            </button>
+            <button class="playback-button" id="pause-button" aria-label="Pause animation" title="Pause" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h3v14H8zM15 5h3v14h-3z"/></svg>
+            </button>
+          </div>
+          <span class="control-separator"></span>
+          <label class="fps-control" for="fps-input">FPS <input id="fps-input" type="number" min="1" max="24" value="12"><span>fps</span></label>
+          <span class="control-separator"></span>
+          <button class="button button-quiet add-frame-button" id="add-frame"><span>＋</span> Add frame</button>
+        </div>
+      </div>
+      <div class="frames-viewport">
+        <div class="frame-track" id="frame-track" aria-label="Animation frames"></div>
+      </div>
+      <div class="timeline-bottom">
+        <div class="timeline-tip"><span>⌘</span> Click a frame to select <span class="tip-dot">·</span> Drag to reorder</div>
+        <div class="frame-actions">
+          <button class="frame-action" id="duplicate-frame" title="Duplicate selected frame" aria-label="Duplicate frame"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Duplicate</span></button>
+          <button class="frame-action delete-action" id="delete-frame" title="Delete selected frame" aria-label="Delete frame"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M5 7l1 13h12l1-13M9 7V4h6v3"/></svg><span>Delete</span></button>
+        </div>
+      </div>
+    </section>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </div>
+</body>
+</html>
