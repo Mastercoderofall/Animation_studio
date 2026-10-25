@@ -35,14 +35,26 @@
       <aside class="tool-panel" aria-label="Drawing tools">
         <div class="panel-heading"><span>TOOLS</span></div>
         <div class="tool-group">
-          <button class="tool-button active" data-tool="pencil" aria-label="Pencil" title="Pencil (P)">
+          <button class="tool-button active" data-tool="brush" aria-label="Brush" title="Brush (B)">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15.2 5.2 3.6 3.6M4 20l4.1-.8L19 8.3a2.5 2.5 0 0 0-3.5-3.5L4.7 15.6 4 20Z"/></svg>
-            <span>Pencil</span><kbd>P</kbd>
+            <span>Brush</span><kbd>B</kbd>
           </button>
           <button class="tool-button" data-tool="eraser" aria-label="Eraser" title="Eraser (E)">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7.5 19-4-4a2 2 0 0 1 0-2.8l8.7-8.7a2 2 0 0 1 2.8 0l5 5a2 2 0 0 1 0 2.8L12.3 19H7.5Z"/><path d="m8 8.5 7.5 7.5M12.3 19H21"/></svg>
             <span>Eraser</span><kbd>E</kbd>
           </button>
+          <button class="tool-button" data-tool="marker" title="Marker"><span class="tool-glyph">▰</span><span>Marker</span></button>
+          <button class="tool-button" data-tool="airbrush" title="Airbrush"><span class="tool-glyph">◌</span><span>Airbrush</span></button>
+          <button class="tool-button" data-tool="pixel" title="Pixel brush"><span class="tool-glyph">▦</span><span>Pixel brush</span></button>
+          <button class="tool-button" data-tool="calligraphy" title="Calligraphy brush"><span class="tool-glyph">✒</span><span>Calligraphy</span></button>
+          <button class="tool-button" data-tool="highlighter" title="Highlighter"><span class="tool-glyph">▬</span><span>Highlighter</span></button>
+          <button class="tool-button" data-tool="line" title="Line tool"><span class="tool-glyph">╱</span><span>Line</span></button>
+          <button class="tool-button" data-tool="rectangle" title="Rectangle tool"><span class="tool-glyph">□</span><span>Rectangle</span></button>
+          <button class="tool-button" data-tool="circle" title="Circle tool"><span class="tool-glyph">○</span><span>Circle</span></button>
+          <button class="tool-button" data-tool="triangle" title="Triangle tool"><span class="tool-glyph">△</span><span>Triangle</span></button>
+          <button class="tool-button" data-tool="fill" title="Fill bucket"><span class="tool-glyph">▤</span><span>Fill bucket</span></button>
+          <button class="tool-button" data-tool="eyedropper" title="Eyedropper (I)"><span class="tool-glyph">⌾</span><span>Eyedropper</span><kbd>I</kbd></button>
+          <button class="tool-button" data-tool="hand" title="Hand / pan (H)"><span class="tool-glyph">✋</span><span>Hand / pan</span><kbd>H</kbd></button>
         </div>
         <div class="tool-divider"></div>
         <div class="settings-section">
@@ -50,13 +62,42 @@
           <input id="brush-size" class="range-input" type="range" min="1" max="40" value="6">
           <div class="range-ends"><span>1</span><span>40</span></div>
         </div>
+        <div class="settings-section extra-brush-settings">
+          <label class="section-label" for="brush-opacity">OPACITY <span id="brush-opacity-value">100%</span></label>
+          <input id="brush-opacity" class="range-input" type="range" min="5" max="100" value="100">
+          <label class="section-label compact-label" for="brush-flow">FLOW <span id="brush-flow-value">100%</span></label>
+          <input id="brush-flow" class="range-input" type="range" min="5" max="100" value="100">
+          <label class="section-label compact-label" for="brush-hardness">HARDNESS <span id="brush-hardness-value">70%</span></label>
+          <input id="brush-hardness" class="range-input" type="range" min="0" max="100" value="70">
+          <label class="section-label compact-label" for="brush-smoothing">SMOOTHING <span id="brush-smoothing-value">20%</span></label>
+          <input id="brush-smoothing" class="range-input" type="range" min="0" max="100" value="20">
+          <label class="stabilizer-control"><input id="brush-stabilizer" type="checkbox"> Stroke stabilizer</label>
+        </div>
         <div class="tool-divider"></div>
         <div class="settings-section color-section">
           <label class="section-label" for="brush-color">COLOR</label>
           <div class="color-control">
             <input id="brush-color" type="color" value="#e9a6ff" aria-label="Brush color">
-            <span id="color-value">#E9A6FF</span>
+            <input id="color-value" class="hex-value" type="text" value="#E9A6FF" aria-label="HEX color value" maxlength="7">
+            <button id="palette-save" class="mini-button" title="Save color to palette" aria-label="Save color to palette">＋</button>
           </div>
+          <div class="color-values">
+            <label>R <input id="color-r" type="number" min="0" max="255"></label>
+            <label>G <input id="color-g" type="number" min="0" max="255"></label>
+            <label>B <input id="color-b" type="number" min="0" max="255"></label>
+          </div>
+          <div class="color-values color-values-secondary">
+            <label>H <input id="color-h" type="number" min="0" max="360"></label>
+            <label>S <input id="color-s" type="number" min="0" max="100"></label>
+            <label>L <input id="color-l" type="number" min="0" max="100"></label>
+          </div>
+          <label class="section-label opacity-label" for="color-opacity">COLOR OPACITY <span id="color-opacity-value">100%</span></label>
+          <input id="color-opacity" class="range-input" type="range" min="5" max="100" value="100">
+          <label class="section-label palette-label" for="palette-select">PALETTE</label>
+          <select id="palette-select" class="palette-select">
+            <option>Neon</option><option>Pastel</option><option>Anime</option><option>Pixel Art</option>
+            <option>Dark Mode</option><option>Nature</option><option>Sunset</option><option>Cyberpunk</option><option>Custom</option>
+          </select>
           <div class="color-swatches" aria-label="Color presets">
             <button class="swatch" style="--swatch:#e9a6ff" data-color="#e9a6ff" aria-label="Lavender"></button>
             <button class="swatch" style="--swatch:#ff7798" data-color="#ff7798" aria-label="Coral"></button>
@@ -65,6 +106,7 @@
             <button class="swatch" style="--swatch:#82b8ff" data-color="#82b8ff" aria-label="Blue"></button>
             <button class="swatch" style="--swatch:#f2f0fa" data-color="#f2f0fa" aria-label="White"></button>
           </div>
+          <div class="recent-colors" id="recent-colors" aria-label="Recently used colors"></div>
         </div>
         <div class="tool-divider"></div>
         <button id="onion-toggle" class="toggle-row" aria-pressed="true">
@@ -72,6 +114,15 @@
           <span class="toggle-copy"><strong>Onion skin</strong><small>Previous frame overlay</small></span>
           <span class="toggle-switch"><span></span></span>
         </button>
+        <div class="onion-settings">
+          <label class="section-label" for="onion-previous">PREVIOUS FRAMES <span id="onion-previous-value">1</span></label>
+          <input id="onion-previous" class="range-input" type="range" min="0" max="4" value="1">
+          <label class="section-label compact-label" for="onion-next">FUTURE FRAMES <span id="onion-next-value">0</span></label>
+          <input id="onion-next" class="range-input" type="range" min="0" max="4" value="0">
+          <label class="section-label compact-label" for="onion-opacity">TRANSPARENCY <span id="onion-opacity-value">20%</span></label>
+          <input id="onion-opacity" class="range-input" type="range" min="5" max="60" value="20">
+          <label class="onion-tint-label">Tint <input id="onion-tint" type="color" value="#ff6f91" aria-label="Onion skin tint"></label>
+        </div>
         <div class="tool-hint"><span class="hint-icon">i</span> Draw on the canvas. Use <kbd>⌘ Z</kbd> to undo.</div>
       </aside>
 
@@ -82,7 +133,8 @@
             <button class="icon-button" id="undo-button" aria-label="Undo" title="Undo (⌘Z)" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-2"/></svg></button>
             <button class="icon-button" id="redo-button" aria-label="Redo" title="Redo (⌘⇧Z)" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h2"/></svg></button>
             <span class="toolbar-divider"></span>
-            <span class="zoom-label">100%</span>
+            <button class="icon-button" id="fit-canvas" aria-label="Fit canvas to screen" title="Fit canvas to screen">⌗</button>
+            <span class="zoom-label" id="zoom-label">100%</span>
             <button class="icon-button fit-button" id="clear-frame" aria-label="Clear current frame" title="Clear current frame"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M5 7l1 13h12l1-13M9 7V4h6v3"/></svg></button>
           </div>
         </div>
@@ -90,6 +142,7 @@
           <div class="canvas-wrap" id="canvas-wrap">
             <canvas id="onion-canvas" aria-hidden="true"></canvas>
             <canvas id="drawing-canvas" aria-label="Animation drawing canvas"></canvas>
+            <div id="brush-cursor" aria-hidden="true"></div>
             <div class="canvas-empty-hint" id="canvas-hint">
               <span class="hint-sparkle">✳</span>
               <span>Start drawing something wonderful</span>
@@ -99,8 +152,15 @@
           <div class="canvas-caption"><span><span class="live-dot"></span> READY TO CREATE</span><span>960 × 540 px</span></div>
         </div>
       </section>
+      <aside class="layers-panel" aria-label="Layers">
+        <div class="layers-heading"><strong>Layers</strong><button id="add-layer" class="mini-button" title="Add layer" aria-label="Add layer">＋</button></div>
+        <div id="layer-list" class="layer-list"></div>
+        <div class="layer-actions">
+          <button id="layer-up" title="Move layer up">↑</button><button id="layer-down" title="Move layer down">↓</button>
+          <button id="delete-layer" title="Delete layer">⌫</button>
+        </div>
+      </aside>
     </main>
-
     <section class="timeline" aria-label="Animation timeline">
       <div class="timeline-top">
         <div class="timeline-title"><span class="timeline-icon">▤</span><strong>Timeline</strong><span class="frame-count" id="frame-count">1 frame</span></div>
@@ -122,14 +182,23 @@
       <div class="frames-viewport">
         <div class="frame-track" id="frame-track" aria-label="Animation frames"></div>
       </div>
-      <div class="timeline-bottom">
-        <div class="timeline-tip"><span>⌘</span> Click a frame to select <span class="tip-dot">·</span> Drag to reorder</div>
-        <div class="frame-actions">
-          <button class="frame-action" id="duplicate-frame" title="Duplicate selected frame" aria-label="Duplicate frame"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Duplicate</span></button>
-          <button class="frame-action delete-action" id="delete-frame" title="Delete selected frame" aria-label="Delete frame"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M5 7l1 13h12l1-13M9 7V4h6v3"/></svg><span>Delete</span></button>
-        </div>
+      <div class="timeline-bottom"><div class="timeline-tip"><span>⌘</span> Click to select · Shift-click for multiple · Drag to reorder · Right-click for frame options</div>
+        <button class="mini-button" id="shortcuts-button" title="Keyboard shortcuts">⌨ Shortcuts</button>
       </div>
     </section>
+    <div class="frame-context-menu" id="frame-context-menu" role="menu" hidden>
+      <button data-action="duplicate" role="menuitem">Duplicate Frame <kbd>⌘D</kbd></button>
+      <button data-action="copy" role="menuitem">Copy Frame <kbd>⌘C</kbd></button>
+      <button data-action="paste" role="menuitem">Paste Frame <kbd>⌘V</kbd></button>
+      <button data-action="delete" role="menuitem">Delete Frame</button>
+      <button data-action="rename" role="menuitem">Rename Frame</button>
+      <button data-action="duration" role="menuitem">Set Frame Duration</button>
+      <button data-action="group" role="menuitem">Create Frame Group</button>
+    </div>
+    <dialog id="shortcuts-dialog" class="shortcuts-dialog">
+      <div class="dialog-heading"><strong>Keyboard shortcuts</strong><button id="close-shortcuts" class="mini-button" aria-label="Close">×</button></div>
+      <div class="shortcut-list"><span>Play / pause</span><kbd>Space</kbd><span>Brush</span><kbd>B</kbd><span>Eraser</span><kbd>E</kbd><span>Eyedropper</span><kbd>I</kbd><span>Hand / pan</span><kbd>H</kbd><span>Undo / redo</span><kbd>⌘ Z / ⇧ ⌘ Z</kbd><span>Duplicate frame</span><kbd>⌘ D</kbd><span>New frame</span><kbd>F</kbd></div>
+    </dialog>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
 </body>
