@@ -1,6 +1,7 @@
 # Animatix Studio
 
-A lightweight, browser-based frame-by-frame animation editor. Open `index.html` in a modern browser to start drawing; projects are stored in the current session until exported.
+A lightweight, browser-based frame-by-frame animation editor.Projects are stored in the current session until exported. 
+SO MAKE SURE TO EXPORT THEM!!!
 
 ## Features
 
