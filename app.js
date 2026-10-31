@@ -4,6 +4,7 @@
   const WIDTH = 960;
   const HEIGHT = 540;
   const MAX_HISTORY = 40;
+  const AUTOSAVE_KEY = "animatix-studio-autosave-v1";
   const drawingCanvas = document.querySelector("#drawing-canvas");
   const onionCanvas = document.querySelector("#onion-canvas");
   const drawingContext = drawingCanvas.getContext("2d");
@@ -13,7 +14,21 @@
   const brushSizeInput = document.querySelector("#brush-size");
   const brushColorInput = document.querySelector("#brush-color");
   const fpsInput = document.querySelector("#fps-input");
-  const frames = [{ image: null, history: [], historyIndex: -1, name: "Frame 01", duration: 1000 / 12, group: "" }];
+  const restoredProject = readAutosave();
+  const frames = restoredProject
+    ? restoredProject.frames.map((image, index) => {
+      const metadata = restoredProject.frameData?.[index] || {};
+      return {
+        image,
+        history: [image],
+        historyIndex: 0,
+        name: typeof metadata.name === "string" ? metadata.name : `Frame ${String(index + 1).padStart(2, "0")}`,
+        duration: Number(metadata.duration) || 1000 / (Number(restoredProject.fps) || 12),
+        group: typeof metadata.group === "string" ? metadata.group : "",
+        tag: typeof metadata.tag === "string" ? metadata.tag : ""
+      };
+    })
+    : [{ image: null, history: [], historyIndex: -1, name: "Frame 01", duration: 1000 / 12, group: "", tag: "" }];
   let activeFrame = 0;
   let selectedFrames = new Set([0]);
   let contextFrame = 0;
@@ -28,6 +43,7 @@
   let stabilizer = false;
   let onionSkin = true;
   let zoom = 1;
+  let zoomToFit = true;
   let pan = { x: 0, y: 0 };
   let panStart = null;
   let drawing = false;
@@ -37,8 +53,17 @@
   let playing = false;
   let playbackTimer = null;
   let toastTimer = null;
+  let autosaveTimer = null;
   let dragIndex = null;
   const recentColors = [];
+  const favoriteColors = new Set();
+  let savedBrushPreset = null;
+
+  if (restoredProject) {
+    document.querySelector("#project-name").textContent = restoredProject.name || "Untitled animation";
+    fpsInput.value = String(Math.max(1, Math.min(24, Number(restoredProject.fps) || 12)));
+    document.querySelector("#save-status-label").textContent = "Restored local draft";
+  }
 
   for (const canvas of [drawingCanvas, onionCanvas]) {
     canvas.width = WIDTH;
@@ -59,6 +84,55 @@
     frame.history.push(snapshot);
     if (frame.history.length > MAX_HISTORY) frame.history.shift();
     frame.historyIndex = frame.history.length - 1;
+  }
+
+  function readAutosave() {
+    try {
+      const value = localStorage.getItem(AUTOSAVE_KEY);
+      if (!value) return null;
+      const project = JSON.parse(value);
+      if (project.format !== "animatix-studio" || project.version !== 1 || !Array.isArray(project.frames) ||
+          !project.frames.length || project.frames.length > 500 ||
+          project.frames.some((image) => image !== null && (typeof image !== "string" || !image.startsWith("data:image/png;base64,")))) {
+        return null;
+      }
+      return project;
+    } catch (error) {
+      console.warn("Could not restore the local Animatix draft.", error);
+      return null;
+    }
+  }
+
+  function scheduleAutosave() {
+    const status = document.querySelector("#save-status");
+    if (!status) return;
+    status.classList.remove("saved");
+    status.classList.add("saving");
+    document.querySelector("#save-status-label").textContent = "Saving…";
+    window.clearTimeout(autosaveTimer);
+    autosaveTimer = window.setTimeout(() => {
+      try {
+        const project = {
+          format: "animatix-studio",
+          version: 1,
+          name: document.querySelector("#project-name").textContent.trim() || "Untitled animation",
+          width: WIDTH,
+          height: HEIGHT,
+          fps: Number(fpsInput.value) || 12,
+          frames: frames.map((frame) => frame.image),
+          frameData: frames.map(({ name, duration, group, tag }) => ({ name, duration, group, tag }))
+        };
+        localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(project));
+        status.classList.remove("saving");
+        status.classList.add("saved");
+        document.querySelector("#save-status-label").textContent = "Saved locally";
+      } catch (error) {
+        status.classList.remove("saving", "saved");
+        document.querySelector("#save-status-label").textContent = "Export to save";
+        showToast("Local save failed. Export your project to keep a copy.");
+        console.error("Could not save the local Animatix draft.", error);
+      }
+    }, 350);
   }
 
   function loadImage(source) {
@@ -93,6 +167,7 @@
     frames.forEach((frame, index) => {
       const card = document.createElement("div");
       card.className = `frame-card${index === activeFrame ? " selected" : ""}${selectedFrames.has(index) ? " multi-selected" : ""}`;
+      if (frame.tag) card.style.setProperty("--frame-tag", frame.tag);
       card.setAttribute("role", "button");
       card.setAttribute("tabindex", "0");
       card.setAttribute("aria-label", `${frame.name}${index === activeFrame ? ", selected" : ""}`);
@@ -119,7 +194,7 @@
       meta.append(name, duration);
       const actions = document.createElement("span");
       actions.className = "frame-card-actions";
-      actions.innerHTML = '<button type="button" class="frame-card-action" data-action="duplicate" title="Duplicate frame" aria-label="Duplicate frame">⧉</button><button type="button" class="frame-card-action delete-action" data-action="delete" title="Delete frame" aria-label="Delete frame">×</button>';
+      actions.innerHTML = '<button type="button" class="frame-card-action" data-action="duplicate" title="Duplicate frame" aria-label="Duplicate frame"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg></button><button type="button" class="frame-card-action delete-action" data-action="delete" title="Delete frame" aria-label="Delete frame"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 11v6m4-6v6M7 7l1 13h8l1-13M9 7V4h6v3"/></svg></button>';
       card.append(thumbnail, actions, meta);
       card.addEventListener("click", (event) => {
         if (event.target.closest(".frame-card-action")) return;
@@ -170,6 +245,9 @@
       track.append(card);
     });
     document.querySelector("#frame-count").textContent = `${frames.length} ${frames.length === 1 ? "frame" : "frames"}`;
+    const layerCount = document.querySelector("#layer-list").children.length;
+    document.querySelector(".layers-heading small").textContent = `${layerCount} ${layerCount === 1 ? "layer" : "layers"}`;
+    scheduleAutosave();
   }
 
   function selectFrame(index, additive = false) {
@@ -183,7 +261,7 @@
   }
 
   function makeFrameCopy(source) {
-    return { image: source.image, history: [source.image], historyIndex: 0, name: `${source.name} copy`, duration: source.duration, group: source.group || "" };
+    return { image: source.image, history: [source.image], historyIndex: 0, name: `${source.name} copy`, duration: source.duration, group: source.group || "", tag: source.tag || "" };
   }
 
   function duplicateFrame(index = activeFrame) {
@@ -423,11 +501,105 @@
   }
 
   document.querySelectorAll(".tool-button").forEach((button) => button.addEventListener("click", () => setTool(button.dataset.tool)));
+  function updateBrushPreview() {
+    const preview = document.querySelector("#brush-preview-mark");
+    preview.style.width = `${Math.max(4, Math.min(70, brushSize * 2))}px`;
+    preview.style.height = `${Math.max(2, Math.min(22, brushSize * 0.8))}px`;
+    preview.style.backgroundColor = brushColor;
+    preview.style.opacity = String(brushOpacity);
+    preview.style.boxShadow = `0 0 ${Math.round(brushSize / 2)}px ${brushColor}88`;
+  }
+  function hslToHex(h, s, l) {
+    const hue = (n) => {
+      const k = (n + h / 30) % 12;
+      const a = s * Math.min(l, 1 - l);
+      return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    };
+    return `#${[hue(0), hue(8), hue(4)].map((value) => Math.round(value * 255).toString(16).padStart(2, "0")).join("")}`;
+  }
+  function renderColorSuggestions() {
+    const rgb = [1, 3, 5].map((offset) => parseInt(brushColor.slice(offset, offset + 2), 16) / 255);
+    const max = Math.max(...rgb), min = Math.min(...rgb);
+    const delta = max - min;
+    let hue = 0;
+    if (delta) {
+      if (max === rgb[0]) hue = 60 * (((rgb[1] - rgb[2]) / delta) % 6);
+      else if (max === rgb[1]) hue = 60 * ((rgb[2] - rgb[0]) / delta + 2);
+      else hue = 60 * ((rgb[0] - rgb[1]) / delta + 4);
+    }
+    hue = (hue + 360) % 360;
+    const lightness = (max + min) / 2;
+    const saturation = delta ? delta / (1 - Math.abs(2 * lightness - 1)) : 0;
+    const suggestions = [
+      [hue - 30, "Analogous"], [hue + 30, "Analogous"],
+      [hue + 120, "Triadic"], [hue + 180, "Complementary"], [hue + 240, "Triadic"]
+    ];
+    const container = document.querySelector("#harmony-swatches");
+    container.replaceChildren();
+    suggestions.forEach(([suggestedHue, harmony]) => {
+      const color = hslToHex((suggestedHue + 360) % 360, saturation, lightness);
+      const swatch = document.createElement("button");
+      swatch.className = "swatch";
+      swatch.style.setProperty("--swatch", color);
+      swatch.title = `${harmony}: ${color.toUpperCase()}`;
+      swatch.setAttribute("aria-label", `${harmony} color ${color}`);
+      swatch.addEventListener("click", () => setColor(color));
+      container.append(swatch);
+    });
+  }
+  function renderFavoriteColors() {
+    const container = document.querySelector("#favorite-colors");
+    container.replaceChildren();
+    favoriteColors.forEach((color) => {
+      const swatch = document.createElement("button");
+      swatch.className = "swatch";
+      swatch.style.setProperty("--swatch", color);
+      swatch.title = `Favorite ${color.toUpperCase()}`;
+      swatch.setAttribute("aria-label", `Use favorite color ${color}`);
+      swatch.addEventListener("click", () => setColor(color));
+      container.append(swatch);
+    });
+  }
+  document.querySelector("#favorite-brush").addEventListener("click", (event) => {
+    savedBrushPreset = {
+      size: brushSizeInput.value,
+      opacity: document.querySelector("#brush-opacity").value,
+      flow: document.querySelector("#brush-flow").value,
+      hardness: document.querySelector("#brush-hardness").value,
+      smoothing: document.querySelector("#brush-smoothing").value
+    };
+    const preset = document.querySelector("#brush-preset");
+    let favorite = preset.querySelector('[value="favorite"]');
+    if (!favorite) {
+      favorite = new Option("★ Favorite brush", "favorite");
+      preset.add(favorite);
+    }
+    preset.value = "favorite";
+    event.currentTarget.textContent = "★";
+    showToast("Brush preset saved");
+  });
+  document.querySelector("#brush-preset").addEventListener("change", (event) => {
+    const presets = {
+      sketch: { size: 5, opacity: 72, flow: 68, hardness: 35, smoothing: 40 },
+      ink: { size: 3, opacity: 100, flow: 100, hardness: 92, smoothing: 28 },
+      marker: { size: 12, opacity: 86, flow: 100, hardness: 72, smoothing: 16 },
+      air: { size: 22, opacity: 42, flow: 38, hardness: 12, smoothing: 24 }
+    };
+    const preset = event.target.value === "favorite" ? savedBrushPreset : presets[event.target.value];
+    if (!preset) return;
+    for (const [key, value] of Object.entries(preset)) {
+      const input = document.querySelector(`#brush-${key}`);
+      input.value = String(value);
+      input.dispatchEvent(new Event("input"));
+    }
+    updateBrushPreview();
+  });
   brushSizeInput.addEventListener("input", () => {
     brushSize = Number(brushSizeInput.value);
     document.querySelector("#brush-size-value").textContent = `${brushSize} px`;
     const progress = ((brushSize - 1) / 39) * 100;
     brushSizeInput.style.background = `linear-gradient(to right,var(--accent) 0%,var(--accent) ${progress}%,#3b3947 ${progress}%,#3b3947 100%)`;
+    updateBrushPreview();
   });
   brushColorInput.addEventListener("input", () => {
     brushColor = brushColorInput.value;
@@ -435,6 +607,9 @@
     if (recentColors[0] !== brushColor) recentColors.unshift(brushColor);
     recentColors.splice(8);
     renderRecentColors();
+    renderColorSuggestions();
+    updateBrushPreview();
+    document.querySelector("#brush-preview-mark").style.backgroundColor = brushColor;
   });
   document.querySelectorAll(".swatch").forEach((swatch) => swatch.addEventListener("click", () => {
     brushColorInput.value = swatch.dataset.color;
@@ -484,6 +659,10 @@
   document.querySelector("#color-g").addEventListener("change", syncRgbColor);
   document.querySelector("#color-b").addEventListener("change", syncRgbColor);
   ["h", "s", "l"].forEach((key) => document.querySelector(`#color-${key}`).addEventListener("change", syncHslColor));
+  document.querySelector("#color-gradient").addEventListener("input", (event) => {
+    document.querySelector("#color-h").value = event.target.value;
+    syncHslColor();
+  });
   const presets = {
     Neon: ["#f72585", "#b5179e", "#7209b7", "#4361ee", "#4cc9f0", "#f9c74f"],
     Pastel: ["#ffadad", "#ffd6a5", "#fdffb6", "#caffbf", "#9bf6ff", "#bdb2ff"],
@@ -518,7 +697,9 @@
     if (!customPalette.includes(brushColor)) customPalette.push(brushColor);
     document.querySelector("#palette-select").value = "Custom";
     renderPalette(customPalette);
-    showToast("Color saved to custom palette");
+    favoriteColors.add(brushColor);
+    renderFavoriteColors();
+    showToast("Color saved to palette and favorites");
   });
   function setColor(color) {
     brushColorInput.value = color;
@@ -561,6 +742,7 @@
     document.querySelector("#color-h").value = Math.round(h);
     document.querySelector("#color-s").value = Math.round(s * 100);
     document.querySelector("#color-l").value = Math.round(l * 100);
+    document.querySelector("#color-gradient").value = Math.round(h);
   }
   function syncRgbColor() {
     const values = ["r", "g", "b"].map((key) => Math.max(0, Math.min(255, Number(document.querySelector(`#color-${key}`).value) || 0)));
@@ -583,6 +765,8 @@
     setColor(`#${values.map((value) => Math.round(value * 255).toString(16).padStart(2, "0")).join("")}`);
   }
   syncColorFields();
+  renderColorSuggestions();
+  updateBrushPreview();
 
   document.querySelector("#frame-context-menu").addEventListener("click", (event) => {
     const action = event.target.closest("[data-action]")?.dataset.action;
@@ -617,6 +801,11 @@
         renderTimeline();
       }
     }
+    const frameTags = { "tag-violet": "#bd8cff", "tag-blue": "#72a8ff", "tag-green": "#64d5ac", "tag-orange": "#ffb36b", "tag-clear": "" };
+    if (Object.hasOwn(frameTags, action)) {
+      frame.tag = frameTags[action];
+      renderTimeline();
+    }
     document.querySelector("#frame-context-menu").hidden = true;
   });
   document.addEventListener("click", (event) => {
@@ -624,18 +813,84 @@
   });
   document.querySelector("#shortcuts-button").addEventListener("click", () => document.querySelector("#shortcuts-dialog").showModal());
   document.querySelector("#close-shortcuts").addEventListener("click", () => document.querySelector("#shortcuts-dialog").close());
-  document.querySelector("#fit-canvas").addEventListener("click", () => {
-    zoom = 1; pan = { x: 0, y: 0 }; applyCanvasTransform();
+  const zoomSelect = document.querySelector("#zoom-select");
+  function setZoom(nextZoom, fit = false) {
+    zoomToFit = fit;
+    zoom = Math.max(0.2, Math.min(3, nextZoom));
+    if (fit) pan = { x: 0, y: 0 };
+    applyCanvasTransform();
+  }
+  function fitCanvasToScreen() {
+    const stage = document.querySelector("#canvas-stage");
+    const availableWidth = Math.max(180, stage.clientWidth - 64);
+    const availableHeight = Math.max(120, stage.clientHeight - 70);
+    setZoom(Math.min(availableWidth / WIDTH, availableHeight / HEIGHT, 1.5), true);
+  }
+  document.querySelector("#fit-canvas").addEventListener("click", fitCanvasToScreen);
+  zoomSelect.addEventListener("change", () => {
+    if (zoomSelect.value === "fit") fitCanvasToScreen();
+    else setZoom(Number(zoomSelect.value));
   });
+  document.querySelector("#zoom-in").addEventListener("click", () => setZoom(zoom * 1.15));
+  document.querySelector("#zoom-out").addEventListener("click", () => setZoom(zoom / 1.15));
   document.querySelector("#canvas-stage").addEventListener("wheel", (event) => {
     event.preventDefault();
-    zoom = Math.max(0.25, Math.min(3, zoom + (event.deltaY < 0 ? 0.1 : -0.1)));
-    applyCanvasTransform();
+    setZoom(zoom * (event.deltaY < 0 ? 1.08 : 1 / 1.08));
   }, { passive: false });
   function applyCanvasTransform() {
-    document.querySelector("#canvas-wrap").style.transform = `translate(${pan.x}px,${pan.y}px) scale(${zoom})`;
-    document.querySelector("#zoom-label").textContent = `${Math.round(zoom * 100)}%`;
+    document.querySelector("#canvas-wrap").style.transform = `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`;
+    if (zoomToFit) {
+      zoomSelect.value = "fit";
+    } else {
+      let option = [...zoomSelect.options].find((item) => item.value !== "fit" && Math.abs(Number(item.value) - zoom) < 0.005);
+      if (!option) {
+        option = new Option(`${Math.round(zoom * 100)}%`, zoom.toFixed(2));
+        zoomSelect.add(option);
+      }
+      zoomSelect.value = option.value;
+    }
   }
+  requestAnimationFrame(fitCanvasToScreen);
+  window.addEventListener("resize", () => { if (zoomToFit) fitCanvasToScreen(); });
+  document.querySelectorAll(".panel-resizer").forEach((handle) => {
+    handle.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      const side = handle.dataset.resize;
+      const workspace = document.querySelector(".workspace");
+      const panel = document.querySelector(side === "tools" ? ".tool-panel" : ".layers-panel");
+      const startX = event.clientX;
+      const startWidth = panel.getBoundingClientRect().width;
+      handle.classList.add("dragging");
+      handle.setPointerCapture(event.pointerId);
+      const resize = (moveEvent) => {
+        const delta = moveEvent.clientX - startX;
+        const width = side === "tools" ? startWidth + delta : startWidth - delta;
+        workspace.style.setProperty(side === "tools" ? "--tools-width" : "--layers-width", `${Math.max(140, Math.min(window.innerWidth * 0.32, width))}px`);
+      };
+      const finish = () => {
+        handle.classList.remove("dragging");
+        handle.removeEventListener("pointermove", resize);
+        handle.removeEventListener("pointerup", finish);
+        handle.removeEventListener("pointercancel", finish);
+        if (zoomToFit) fitCanvasToScreen();
+      };
+      handle.addEventListener("pointermove", resize);
+      handle.addEventListener("pointerup", finish);
+      handle.addEventListener("pointercancel", finish);
+    });
+    handle.addEventListener("keydown", (event) => {
+      if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      event.preventDefault();
+      const side = handle.dataset.resize;
+      const workspace = document.querySelector(".workspace");
+      const property = side === "tools" ? "--tools-width" : "--layers-width";
+      const panel = document.querySelector(side === "tools" ? ".tool-panel" : ".layers-panel");
+      const delta = event.key === "ArrowRight" ? 12 : -12;
+      const width = panel.getBoundingClientRect().width + (side === "tools" ? delta : -delta);
+      workspace.style.setProperty(property, `${Math.max(140, Math.min(window.innerWidth * 0.32, width))}px`);
+      if (zoomToFit) fitCanvasToScreen();
+    });
+  });
   drawingCanvas.addEventListener("pointermove", (event) => {
     const cursor = document.querySelector("#brush-cursor");
     const bounds = document.querySelector("#canvas-wrap").getBoundingClientRect();
@@ -656,7 +911,8 @@
   });
 
   let clipboardFrame = null;
-  document.querySelector("#layer-list").innerHTML = '<div class="layer-row active" data-layer="Sketch"><button class="layer-visibility" title="Toggle layer visibility">◉</button><span>Sketch</span><button class="layer-lock" title="Lock layer">⌑</button></div>';
+  document.querySelector("#layer-list").innerHTML = '<div class="layer-row active" data-layer="Sketch" draggable="true"><button class="layer-visibility" title="Toggle layer visibility" aria-label="Toggle layer visibility">◉</button><span class="layer-icon" aria-hidden="true">▧</span><span class="layer-name">Sketch</span><button class="layer-lock" title="Lock layer" aria-label="Lock layer">⌑</button></div>';
+  document.querySelector(".layers-heading small").textContent = "1 layer";
   document.querySelector("#layer-list").addEventListener("click", (event) => {
     const row = event.target.closest(".layer-row");
     if (row) {
@@ -667,10 +923,12 @@
     const count = document.querySelectorAll(".layer-row").length + 1;
     const row = document.createElement("div");
     row.className = "layer-row";
-    row.innerHTML = `<button class="layer-visibility" title="Toggle layer visibility">◉</button><span>Layer ${count}</span><button class="layer-lock" title="Lock layer">⌑</button>`;
+    row.draggable = true;
+    row.innerHTML = `<button class="layer-visibility" title="Toggle layer visibility" aria-label="Toggle layer visibility">◉</button><span class="layer-icon" aria-hidden="true">▧</span><span class="layer-name">Layer ${count}</span><button class="layer-lock" title="Lock layer" aria-label="Lock layer">⌑</button>`;
     document.querySelectorAll(".layer-row").forEach((item) => item.classList.remove("active"));
     row.classList.add("active");
     document.querySelector("#layer-list").append(row);
+    document.querySelector(".layers-heading small").textContent = `${count} ${count === 1 ? "layer" : "layers"}`;
   });
   document.querySelector("#layer-list").addEventListener("click", (event) => {
     if (event.target.matches(".layer-visibility")) event.target.classList.toggle("muted");
@@ -678,16 +936,43 @@
   });
   document.querySelector("#layer-list").addEventListener("dblclick", (event) => {
     const row = event.target.closest(".layer-row");
-    const label = row?.querySelector("span");
+    const label = row?.querySelector(".layer-name");
     if (!label) return;
     const name = window.prompt("Rename layer:", label.textContent);
     if (name?.trim()) label.textContent = name.trim();
+  });
+  let draggedLayer = null;
+  document.querySelector("#layer-list").addEventListener("dragstart", (event) => {
+    draggedLayer = event.target.closest(".layer-row");
+    if (!draggedLayer) return;
+    draggedLayer.classList.add("dragging");
+    event.dataTransfer.effectAllowed = "move";
+  });
+  document.querySelector("#layer-list").addEventListener("dragend", () => {
+    draggedLayer?.classList.remove("dragging");
+    document.querySelectorAll(".layer-row").forEach((row) => row.classList.remove("drag-over"));
+    draggedLayer = null;
+  });
+  document.querySelector("#layer-list").addEventListener("dragover", (event) => {
+    const target = event.target.closest(".layer-row");
+    if (!draggedLayer || !target || target === draggedLayer) return;
+    event.preventDefault();
+    target.classList.add("drag-over");
+  });
+  document.querySelector("#layer-list").addEventListener("drop", (event) => {
+    const target = event.target.closest(".layer-row");
+    if (!draggedLayer || !target || target === draggedLayer) return;
+    event.preventDefault();
+    const bounds = target.getBoundingClientRect();
+    event.clientY < bounds.top + bounds.height / 2 ? target.before(draggedLayer) : target.after(draggedLayer);
   });
   document.querySelector("#delete-layer").addEventListener("click", () => {
     const active = document.querySelector(".layer-row.active");
     if (document.querySelectorAll(".layer-row").length <= 1) return showToast("Keep at least one layer");
     active?.remove();
     document.querySelector(".layer-row")?.classList.add("active");
+    const count = document.querySelectorAll(".layer-row").length;
+    document.querySelector(".layers-heading small").textContent = `${count} ${count === 1 ? "layer" : "layers"}`;
   });
   document.querySelector("#layer-up").addEventListener("click", () => moveLayer(-1));
   document.querySelector("#layer-down").addEventListener("click", () => moveLayer(1));
@@ -737,7 +1022,10 @@
 
   document.querySelector("#rename-project").addEventListener("click", () => {
     const name = window.prompt("Name your animation:", document.querySelector("#project-name").textContent);
-    if (name && name.trim()) document.querySelector("#project-name").textContent = name.trim();
+    if (name && name.trim()) {
+      document.querySelector("#project-name").textContent = name.trim();
+      scheduleAutosave();
+    }
   });
   document.querySelector("#export-project").addEventListener("click", () => {
     const project = {
@@ -748,7 +1036,7 @@
       height: HEIGHT,
       fps: Number(fpsInput.value),
       frames: frames.map((frame) => frame.image),
-      frameData: frames.map(({ name, duration, group }) => ({ name, duration, group }))
+      frameData: frames.map(({ name, duration, group, tag }) => ({ name, duration, group, tag }))
     };
     const blob = new Blob([JSON.stringify(project)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -773,7 +1061,7 @@
       pause();
       frames.splice(0, frames.length, ...project.frames.map((image, index) => {
         const metadata = project.frameData?.[index] || {};
-        const frame = { image, name: typeof metadata.name === "string" ? metadata.name : `Frame ${String(index + 1).padStart(2, "0")}`, duration: Number(metadata.duration) || 1000 / (Number(project.fps) || 12), group: typeof metadata.group === "string" ? metadata.group : "", history: [], historyIndex: -1 };
+        const frame = { image, name: typeof metadata.name === "string" ? metadata.name : `Frame ${String(index + 1).padStart(2, "0")}`, duration: Number(metadata.duration) || 1000 / (Number(project.fps) || 12), group: typeof metadata.group === "string" ? metadata.group : "", tag: typeof metadata.tag === "string" ? metadata.tag : "", history: [], historyIndex: -1 };
         frame.history.push(image);
         frame.historyIndex = 0;
         return frame;
@@ -802,9 +1090,61 @@
     showToast(error instanceof Error ? error.message : "Something went wrong.");
   }
 
+  function openCommandPalette() {
+    const dialog = document.querySelector("#command-dialog");
+    if (!dialog.open) dialog.showModal();
+    const search = document.querySelector("#command-search");
+    search.value = "";
+    document.querySelectorAll("#command-list button").forEach((item) => { item.hidden = false; });
+    search.focus();
+  }
+  document.querySelector("#command-button").addEventListener("click", openCommandPalette);
+  document.querySelector("#command-button-timeline").addEventListener("click", openCommandPalette);
+  document.querySelector("#command-search").addEventListener("input", (event) => {
+    const query = event.target.value.trim().toLowerCase();
+    document.querySelectorAll("#command-list button").forEach((item) => {
+      item.hidden = !item.textContent.toLowerCase().includes(query);
+    });
+  });
+  document.querySelector("#command-list").addEventListener("click", (event) => {
+    const command = event.target.closest("[data-command]")?.dataset.command;
+    if (!command) return;
+    document.querySelector("#command-dialog").close();
+    const commands = {
+      brush: () => setTool("brush"),
+      pencil: () => setTool("pencil"),
+      hand: () => setTool("hand"),
+      "add-frame": () => document.querySelector("#add-frame").click(),
+      play: () => playing ? pause() : play(),
+      fit: fitCanvasToScreen,
+      export: () => document.querySelector("#export-project").click(),
+      shortcuts: () => document.querySelector("#shortcuts-dialog").showModal()
+    };
+    commands[command]?.();
+  });
+  document.querySelector("#help-button").addEventListener("click", () => document.querySelector("#welcome-dialog").showModal());
+  document.querySelector("#close-welcome").addEventListener("click", () => document.querySelector("#welcome-dialog").close());
+  document.querySelector("#notifications-button").addEventListener("click", () => showToast("You're all caught up."));
+  document.querySelector("#project-name").addEventListener("input", scheduleAutosave);
+  document.querySelector("#project-name").addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      event.currentTarget.blur();
+    }
+  });
+  document.querySelector("#project-name").addEventListener("blur", (event) => {
+    event.currentTarget.textContent = event.currentTarget.textContent.trim() || "Untitled animation";
+    scheduleAutosave();
+  });
+
   document.addEventListener("keydown", (event) => {
     const target = event.target;
-    const typing = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+      event.preventDefault();
+      openCommandPalette();
+      return;
+    }
+    const typing = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.isContentEditable;
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z") {
       event.preventDefault();
       if (event.shiftKey) travelHistory(1);
@@ -832,9 +1172,14 @@
       if (playing) pause();
       else play();
     } else if (event.key.toLowerCase() === "b") setTool("brush");
+    else if (event.key.toLowerCase() === "p") setTool("pencil");
     else if (event.key.toLowerCase() === "e") setTool("eraser");
     else if (event.key.toLowerCase() === "i") setTool("eyedropper");
     else if (event.key.toLowerCase() === "h") setTool("hand");
     else if (event.key.toLowerCase() === "f") document.querySelector("#add-frame").click();
+    else if (event.key === "0") fitCanvasToScreen();
+    else if (event.key === "+" || event.key === "=") setZoom(zoom * 1.15);
+    else if (event.key === "-") setZoom(zoom / 1.15);
+    else if (event.key === "?") document.querySelector("#shortcuts-dialog").showModal();
   });
 })();

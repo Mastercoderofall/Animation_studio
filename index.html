@@ -20,11 +20,14 @@
       </a>
       <div class="project-title">
         <span class="project-indicator"></span>
-        <span id="project-name">Untitled animation</span>
+        <span id="project-name" contenteditable="true" role="textbox" aria-label="Animation title" spellcheck="false">Untitled animation</span>
         <button class="icon-button rename-button" id="rename-project" aria-label="Rename project" title="Rename project">✎</button>
       </div>
       <div class="top-actions">
-        <span class="save-status"><span class="save-dot"></span> Session only · export to save</span>
+        <span class="save-status" id="save-status"><span class="save-dot"></span><span id="save-status-label">Session project</span></span>
+        <button class="icon-button header-icon" id="help-button" aria-label="Getting started" title="Getting started">?</button>
+        <button class="icon-button header-icon" id="notifications-button" aria-label="Notifications" title="Notifications">♧</button>
+        <span class="profile-avatar" aria-label="Artist profile" title="Artist profile">A</span>
         <button class="button button-quiet" id="import-project" title="Open an Animatix project">Open project</button>
         <input id="project-file" type="file" accept=".animatix,.json,application/json" hidden>
         <button class="button button-primary" id="export-project"><span aria-hidden="true">↗</span> Export project</button>
@@ -33,31 +36,42 @@
 
     <main class="workspace">
       <aside class="tool-panel" aria-label="Drawing tools">
-        <div class="panel-heading"><span>TOOLS</span></div>
-        <div class="tool-group">
-          <button class="tool-button active" data-tool="brush" aria-label="Brush" title="Brush (B)">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15.2 5.2 3.6 3.6M4 20l4.1-.8L19 8.3a2.5 2.5 0 0 0-3.5-3.5L4.7 15.6 4 20Z"/></svg>
-            <span>Brush</span><kbd>B</kbd>
-          </button>
-          <button class="tool-button" data-tool="eraser" aria-label="Eraser" title="Eraser (E)">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7.5 19-4-4a2 2 0 0 1 0-2.8l8.7-8.7a2 2 0 0 1 2.8 0l5 5a2 2 0 0 1 0 2.8L12.3 19H7.5Z"/><path d="m8 8.5 7.5 7.5M12.3 19H21"/></svg>
-            <span>Eraser</span><kbd>E</kbd>
-          </button>
-          <button class="tool-button" data-tool="marker" title="Marker"><span class="tool-glyph">▰</span><span>Marker</span></button>
-          <button class="tool-button" data-tool="airbrush" title="Airbrush"><span class="tool-glyph">◌</span><span>Airbrush</span></button>
-          <button class="tool-button" data-tool="pixel" title="Pixel brush"><span class="tool-glyph">▦</span><span>Pixel brush</span></button>
-          <button class="tool-button" data-tool="calligraphy" title="Calligraphy brush"><span class="tool-glyph">✒</span><span>Calligraphy</span></button>
-          <button class="tool-button" data-tool="highlighter" title="Highlighter"><span class="tool-glyph">▬</span><span>Highlighter</span></button>
-          <button class="tool-button" data-tool="line" title="Line tool"><span class="tool-glyph">╱</span><span>Line</span></button>
-          <button class="tool-button" data-tool="rectangle" title="Rectangle tool"><span class="tool-glyph">□</span><span>Rectangle</span></button>
-          <button class="tool-button" data-tool="circle" title="Circle tool"><span class="tool-glyph">○</span><span>Circle</span></button>
-          <button class="tool-button" data-tool="triangle" title="Triangle tool"><span class="tool-glyph">△</span><span>Triangle</span></button>
-          <button class="tool-button" data-tool="fill" title="Fill bucket"><span class="tool-glyph">▤</span><span>Fill bucket</span></button>
-          <button class="tool-button" data-tool="eyedropper" title="Eyedropper (I)"><span class="tool-glyph">⌾</span><span>Eyedropper</span><kbd>I</kbd></button>
-          <button class="tool-button" data-tool="hand" title="Hand / pan (H)"><span class="tool-glyph">✋</span><span>Hand / pan</span><kbd>H</kbd></button>
-        </div>
+        <div class="panel-heading"><span>TOOLKIT</span><button class="icon-button palette-trigger" id="command-button" title="Quick actions (⌘K)" aria-label="Open quick actions">⌘K</button></div>
+        <section class="tool-category" aria-label="Drawing tools">
+          <h2>DRAWING</h2>
+          <div class="tool-group">
+            <button class="tool-button active" data-tool="brush" aria-label="Brush" title="Brush · B"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15.2 5.2 3.6 3.6M4 20l4.1-.8L19 8.3a2.5 2.5 0 0 0-3.5-3.5L4.7 15.6 4 20Z"/></svg><span>Brush</span><kbd>B</kbd></button>
+            <button class="tool-button" data-tool="pencil" aria-label="Pencil" title="Pencil · P"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z"/><path d="m14 7 3 3"/></svg><span>Pencil</span><kbd>P</kbd></button>
+            <button class="tool-button" data-tool="marker" title="Marker"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16 9-9 5 5-9 9H4v-5Z"/><path d="m11 9 5 5M3 21h18"/></svg><span>Marker</span></button>
+            <button class="tool-button" data-tool="airbrush" title="Airbrush"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4m0-12.8L17 7M7 17l-1.4 1.4"/><circle cx="12" cy="12" r="4"/></svg><span>Airbrush</span></button>
+            <button class="tool-button" data-tool="pixel" title="Pixel brush"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg><span>Pixel brush</span></button>
+            <button class="tool-button" data-tool="calligraphy" title="Calligraphy brush"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 5-1 10-10a2.1 2.1 0 0 0-3-3L6 16l-2 4Z"/><path d="m14 7 3 3M5 19l-1-1"/></svg><span>Calligraphy</span></button>
+            <button class="tool-button" data-tool="highlighter" title="Highlighter"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 15 7-7 5 5-7 7H4v-5Z"/><path d="m13 6 5 5M3 21h18"/></svg><span>Highlighter</span></button>
+          </div>
+        </section>
+        <section class="tool-category" aria-label="Shape tools">
+          <h2>SHAPES</h2>
+          <div class="tool-group">
+            <button class="tool-button" data-tool="line" title="Line tool"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 19 14-14"/></svg><span>Line</span></button>
+            <button class="tool-button" data-tool="rectangle" title="Rectangle tool"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="1"/></svg><span>Rectangle</span></button>
+            <button class="tool-button" data-tool="circle" title="Circle tool"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg><span>Circle</span></button>
+            <button class="tool-button" data-tool="triangle" title="Triangle tool"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 4 9 16H3L12 4Z"/></svg><span>Triangle</span></button>
+          </div>
+        </section>
+        <section class="tool-category" aria-label="Utility tools">
+          <h2>UTILITY</h2>
+          <div class="tool-group">
+            <button class="tool-button" data-tool="fill" title="Fill bucket"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12 7-7 8 8-7 7H5a2 2 0 0 1-1-3.7L13 7"/><path d="M18 16h.01M20 18a2 2 0 0 1-4 0c0-1.1 2-3 2-3s2 1.9 2 3Z"/></svg><span>Fill bucket</span></button>
+            <button class="tool-button" data-tool="eyedropper" title="Eyedropper · I"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6 4 4M4 20l4-.8 10-10a2.8 2.8 0 0 0-4-4l-10 10L4 20Z"/><path d="m12 8 4 4"/></svg><span>Eyedropper</span><kbd>I</kbd></button>
+            <button class="tool-button" data-tool="hand" title="Hand / pan · H"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12V6a2 2 0 0 1 4 0v5-7a2 2 0 0 1 4 0v8-5a2 2 0 0 1 4 0v8a7 7 0 0 1-7 7h-1a7 7 0 0 1-5.7-3L3 15a2 2 0 0 1 3-2.5L8 14"/></svg><span>Hand / pan</span><kbd>H</kbd></button>
+            <button class="tool-button" data-tool="eraser" aria-label="Eraser" title="Eraser · E"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7.5 19-4-4a2 2 0 0 1 0-2.8l8.7-8.7a2 2 0 0 1 2.8 0l5 5a2 2 0 0 1 0 2.8L12.3 19H7.5Z"/><path d="m8 8.5 7.5 7.5M12.3 19H21"/></svg><span>Eraser</span><kbd>E</kbd></button>
+          </div>
+        </section>
         <div class="tool-divider"></div>
         <div class="settings-section">
+          <div class="brush-preview" aria-label="Live brush preview"><span id="brush-preview-mark"></span><span>PREVIEW</span></div>
+          <label class="section-label preset-label" for="brush-preset">BRUSH PRESET</label>
+          <div class="brush-preset-row"><select id="brush-preset" class="palette-select" aria-label="Brush preset"><option value="custom">Custom</option><option value="sketch">Soft sketch</option><option value="ink">Fine ink</option><option value="marker">Bold marker</option><option value="air">Airbrush</option></select><button id="favorite-brush" class="mini-button" title="Save brush preset" aria-label="Save brush preset">☆</button></div>
           <label class="section-label" for="brush-size">BRUSH SIZE <span id="brush-size-value">6 px</span></label>
           <input id="brush-size" class="range-input" type="range" min="1" max="40" value="6">
           <div class="range-ends"><span>1</span><span>40</span></div>
@@ -91,6 +105,8 @@
             <label>S <input id="color-s" type="number" min="0" max="100"></label>
             <label>L <input id="color-l" type="number" min="0" max="100"></label>
           </div>
+          <label class="section-label gradient-label" for="color-gradient">HUE <span>COLOR SPECTRUM</span></label>
+          <input id="color-gradient" class="range-input hue-input" type="range" min="0" max="359" value="280" aria-label="Color hue spectrum">
           <label class="section-label opacity-label" for="color-opacity">COLOR OPACITY <span id="color-opacity-value">100%</span></label>
           <input id="color-opacity" class="range-input" type="range" min="5" max="100" value="100">
           <label class="section-label palette-label" for="palette-select">PALETTE</label>
@@ -106,6 +122,10 @@
             <button class="swatch" style="--swatch:#82b8ff" data-color="#82b8ff" aria-label="Blue"></button>
             <button class="swatch" style="--swatch:#f2f0fa" data-color="#f2f0fa" aria-label="White"></button>
           </div>
+          <label class="section-label harmony-label">COLOR HARMONY</label>
+          <div class="harmony-swatches" id="harmony-swatches" aria-label="Suggested color harmonies"></div>
+          <label class="section-label favorite-label">FAVORITES</label>
+          <div class="favorite-colors" id="favorite-colors" aria-label="Favorite colors"></div>
           <div class="recent-colors" id="recent-colors" aria-label="Recently used colors"></div>
         </div>
         <div class="tool-divider"></div>
@@ -125,6 +145,7 @@
         </div>
         <div class="tool-hint"><span class="hint-icon">i</span> Draw on the canvas. Use <kbd>⌘ Z</kbd> to undo.</div>
       </aside>
+      <div class="panel-resizer" data-resize="tools" role="separator" aria-orientation="vertical" aria-label="Resize tools panel" tabindex="0"></div>
 
       <section class="editor" aria-label="Animation editor">
         <div class="canvas-toolbar">
@@ -133,8 +154,10 @@
             <button class="icon-button" id="undo-button" aria-label="Undo" title="Undo (⌘Z)" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-2"/></svg></button>
             <button class="icon-button" id="redo-button" aria-label="Redo" title="Redo (⌘⇧Z)" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h2"/></svg></button>
             <span class="toolbar-divider"></span>
-            <button class="icon-button" id="fit-canvas" aria-label="Fit canvas to screen" title="Fit canvas to screen">⌗</button>
-            <span class="zoom-label" id="zoom-label">100%</span>
+            <button class="icon-button zoom-step" id="zoom-out" aria-label="Zoom out" title="Zoom out (−)">−</button>
+            <select class="zoom-select" id="zoom-select" aria-label="Canvas zoom"><option value="fit">Fit</option><option value="0.25">25%</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option><option value="1.25">125%</option><option value="1.5">150%</option><option value="2">200%</option></select>
+            <button class="icon-button zoom-step" id="zoom-in" aria-label="Zoom in" title="Zoom in (+)">+</button>
+            <button class="icon-button" id="fit-canvas" aria-label="Fit canvas to screen" title="Fit canvas to screen (0)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3"/></svg></button>
             <button class="icon-button fit-button" id="clear-frame" aria-label="Clear current frame" title="Clear current frame"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M5 7l1 13h12l1-13M9 7V4h6v3"/></svg></button>
           </div>
         </div>
@@ -149,11 +172,12 @@
               <small>Your first frame is a blank canvas</small>
             </div>
           </div>
-          <div class="canvas-caption"><span><span class="live-dot"></span> READY TO CREATE</span><span>960 × 540 px</span></div>
+          <div class="canvas-caption"><span><span class="live-dot"></span> READY TO CREATE</span><span>960 × 540 px · 16:9</span></div>
         </div>
       </section>
+      <div class="panel-resizer" data-resize="layers" role="separator" aria-orientation="vertical" aria-label="Resize layers panel" tabindex="0"></div>
       <aside class="layers-panel" aria-label="Layers">
-        <div class="layers-heading"><strong>Layers</strong><button id="add-layer" class="mini-button" title="Add layer" aria-label="Add layer">＋</button></div>
+        <div class="layers-heading"><div><strong>Layers</strong><small>1 layer</small></div><button id="add-layer" class="mini-button" title="Add layer" aria-label="Add layer">＋</button></div>
         <div id="layer-list" class="layer-list"></div>
         <div class="layer-actions">
           <button id="layer-up" title="Move layer up">↑</button><button id="layer-down" title="Move layer down">↓</button>
@@ -183,7 +207,7 @@
         <div class="frame-track" id="frame-track" aria-label="Animation frames"></div>
       </div>
       <div class="timeline-bottom"><div class="timeline-tip"><span>⌘</span> Click to select · Shift-click for multiple · Drag to reorder · Right-click for frame options</div>
-        <button class="mini-button" id="shortcuts-button" title="Keyboard shortcuts">⌨ Shortcuts</button>
+        <div class="timeline-tools"><button class="mini-button" id="command-button-timeline" title="Quick actions (⌘K)">⌘K</button><button class="mini-button" id="shortcuts-button" title="Keyboard shortcuts">⌨ Shortcuts</button></div>
       </div>
     </section>
     <div class="frame-context-menu" id="frame-context-menu" role="menu" hidden>
@@ -194,10 +218,26 @@
       <button data-action="rename" role="menuitem">Rename Frame</button>
       <button data-action="duration" role="menuitem">Set Frame Duration</button>
       <button data-action="group" role="menuitem">Create Frame Group</button>
+      <div class="frame-tag-options" role="group" aria-label="Frame color tag"><span>Frame color</span><button data-action="tag-violet" aria-label="Violet tag" title="Violet"></button><button data-action="tag-blue" aria-label="Blue tag" title="Blue"></button><button data-action="tag-green" aria-label="Green tag" title="Green"></button><button data-action="tag-orange" aria-label="Orange tag" title="Orange"></button><button data-action="tag-clear" aria-label="Clear frame tag" title="Clear tag"></button></div>
     </div>
     <dialog id="shortcuts-dialog" class="shortcuts-dialog">
       <div class="dialog-heading"><strong>Keyboard shortcuts</strong><button id="close-shortcuts" class="mini-button" aria-label="Close">×</button></div>
-      <div class="shortcut-list"><span>Play / pause</span><kbd>Space</kbd><span>Brush</span><kbd>B</kbd><span>Eraser</span><kbd>E</kbd><span>Eyedropper</span><kbd>I</kbd><span>Hand / pan</span><kbd>H</kbd><span>Undo / redo</span><kbd>⌘ Z / ⇧ ⌘ Z</kbd><span>Duplicate frame</span><kbd>⌘ D</kbd><span>New frame</span><kbd>F</kbd></div>
+      <div class="shortcut-list"><span>Play / pause</span><kbd>Space</kbd><span>Brush</span><kbd>B</kbd><span>Pencil</span><kbd>P</kbd><span>Eraser</span><kbd>E</kbd><span>Eyedropper</span><kbd>I</kbd><span>Hand / pan</span><kbd>H</kbd><span>Zoom in / out</span><kbd>+ / −</kbd><span>Fit canvas</span><kbd>0</kbd><span>Quick actions</span><kbd>⌘ K</kbd><span>Undo / redo</span><kbd>⌘ Z / ⇧ ⌘ Z</kbd><span>Duplicate frame</span><kbd>⌘ D</kbd><span>New frame</span><kbd>F</kbd></div>
+    </dialog>
+    <dialog id="command-dialog" class="command-dialog">
+      <div class="command-search"><span>⌕</span><input id="command-search" type="search" placeholder="Search tools and actions…" aria-label="Search commands"><kbd>ESC</kbd></div>
+      <div class="command-list" id="command-list">
+        <button data-command="brush"><span>Brush tool</span><kbd>B</kbd></button><button data-command="pencil"><span>Pencil tool</span><kbd>P</kbd></button><button data-command="hand"><span>Hand / pan tool</span><kbd>H</kbd></button>
+        <button data-command="add-frame"><span>Add new frame</span><kbd>F</kbd></button><button data-command="play"><span>Play / pause animation</span><kbd>Space</kbd></button>
+        <button data-command="fit"><span>Fit canvas to screen</span><kbd>0</kbd></button><button data-command="export"><span>Export project</span><kbd></kbd></button>
+        <button data-command="shortcuts"><span>Keyboard shortcuts</span><kbd>?</kbd></button>
+      </div>
+    </dialog>
+    <dialog id="welcome-dialog" class="welcome-dialog">
+      <div class="welcome-mark"><span>✦</span></div><p class="eyebrow">WELCOME TO ANIMATIX</p><h2>Your ideas, frame by frame.</h2>
+      <p class="welcome-copy">A focused workspace for sketching, shaping, and bringing motion to life.</p>
+      <div class="welcome-steps"><div><span>01</span><strong>Choose a tool</strong><small>Pick a brush or shape from the left rail.</small></div><div><span>02</span><strong>Make a frame</strong><small>Draw on the stage, then add your next frame.</small></div><div><span>03</span><strong>Find your rhythm</strong><small>Preview with Space and export when ready.</small></div></div>
+      <button class="button button-primary welcome-dismiss" id="close-welcome">Start creating <span>→</span></button>
     </dialog>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
